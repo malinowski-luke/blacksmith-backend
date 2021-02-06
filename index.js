@@ -11,8 +11,6 @@ app.use(cors())
 app.use(express.json())
 app.use(Router)
 
-console.log(MONGO_URI)
-
 mongoose.connect(
   MONGO_URI,
   {
