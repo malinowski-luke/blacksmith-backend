@@ -2,13 +2,19 @@ require('dotenv').config({})
 const express = require('express')
 const app = express()
 const cors = require('cors')
+const bodyParser = require('body-parser')
 const mongoose = require('mongoose')
 const Router = require('./router/index')
 const { MONGO_URI, PORT } = process.env
 const runDeleteScript = require('./scripts/deleteUsers')
 
+
+app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({ extended: true }))
+
 app.use(cors())
-app.use(express.json())
+
+
 app.use(Router)
 
 mongoose.connect(

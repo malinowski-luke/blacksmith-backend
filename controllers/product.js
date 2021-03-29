@@ -5,37 +5,76 @@ const logScrappedData = require("../scripts/logScrappedData")
 
 module.exports = {
 	getProducts: async (req, res) => {
-		const { channel_id } = req.params
+		const channel_id = req.params.channel_id
 
-		const userProducts = await ProductModel.find({ channel_id })
+		if (!channel_id) {
+			return res.status(400).send("GET '/product/:channel_id' request needs a channel_id")
+		}
 
-		return res.status(200).send(userProducts)
+		try {
+			const userProducts = await ProductModel.find({ channel_id })
+
+			res.status(200).send(userProducts)
+		} catch (error) {
+			console.log(error)
+
+			res.sendStatus(400)
+		}
 	},
 
 	postProduct: async (req, res) => {
 		const channel_id = req.params.channel_id
-
 		const product = req.body.product
 
-		if (!product.url)
-			return res
-				.status(417)
-				.send(
-					"Body Request Requires: product with following properties { title, img, has_prime, price, url}"
-				)
+		if (!channel_id) {
+			return res.status(400).send("POST '/product/:channel_id' request needs a channel_id")
+		}
+
+		if (!product) {
+			return res.status(400).send("POST '/product/:channel_id' request needs a product")
+		}
+
 
 		try {
-			const productExists = await ProductModel.findOne({ channel_id, url })
-			if (productExists) return res.status(400).send("Duplicate Product!")
-
 			await ProductModel.create({
 				channel_id,
 				...product,
 			})
 
-			res.sendStatus(202)
+			const allProducts = await ProductModel.find({ channel_id })
+
+			res.status(202).send(allProducts)
 		} catch (err) {
 			res.status(500).send(err)
+		}
+	},
+
+	deleteProduct: async (req, res) => {
+		const product_id = req.params.product_id
+		const channel_id = req.params.channel_id
+
+		if (!channel_id) {
+			return res.status(400).send("DELETE '/product/:channel_id/:product_id' request needs a channel_id")
+		}
+
+		if (!product_id) {
+			return res.status(400).send("DELETE '/product/:channel_id/:product_id' request needs a product_id")
+		}
+
+		try {
+			const { deletedCount } = await ProductModel.deleteOne({
+				_id: product_id,
+			})
+
+			if (deletedCount === 0) {
+				return res.status(500).send("Issue Deleting Product")
+			}
+
+			const allProducts = await ProductModel.find({ channel_id })
+
+			res.status(200).send(allProducts)
+		} catch (error) {
+			console.log(error)
 		}
 	},
 
@@ -43,10 +82,27 @@ module.exports = {
 		const channel_id = req.params.channel_id
 		const url = req.body.url
 
-		const productExists = await ProductModel.findOne({ channel_id, url })
-		if (productExists) return res.status(400).send("Duplicate Product!")
+		if (!channel_id) {
+			return res.status(400).send("POST '/product/scrape/:channel_id' request needs a channel_id")
+		}
 
-		let product = {}
+		if (!url) {
+			return res.status(400).send("POST '/product/scrape/:channel_id' request needs a url")
+		}
+
+		try {
+			const productExists = await ProductModel.findOne({ channel_id, url })
+
+			if (productExists) {
+				return res.status(400).send("Duplicate Product!")
+			}
+
+		} catch (error) {
+			console.log(error)
+			res.status(500).send('Scraping Error')
+		}
+
+		let product
 
 		const { status, data } = await scrape(url)
 
@@ -54,24 +110,8 @@ module.exports = {
 			product = {
 				...data,
 			}
-
-			logScrappedData(product, "log.scrappedData")
 		}
-
 		res.status(status).send(product)
-	},
 
-	deleteProduct: async (req, res) => {
-		const { product_id } = req.params
-
-		if (!product_id)
-			return res.status(400).send("Delete request needs product_id")
-
-		const { deletedCount } = await ProductModel.deleteOne({
-			_id: product_id,
-		})
-
-		if (deletedCount < 1) return res.status(500).send("Issue Deleting Product")
-		else res.status(200).send("Product Deleted")
 	},
 }

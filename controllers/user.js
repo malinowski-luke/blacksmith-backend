@@ -3,7 +3,16 @@ const moment = require('moment')
 const axios = require('axios')
 module.exports = {
   createUser: async (req, res) => {
-    const { client_id, channel_id } = req.body.client_id
+    const channel_id = req.params.channel_id
+    const client_id = req.body.client_id
+
+    if (!channel_id) {
+      return res.status(400).send("POST '/user/:channel_id' request needs a channel_id")
+    }
+
+    if (!client_id) {
+      return res.status(400).send("POST '/user/:channel_id' request needs a client_id")
+    }
 
     let user
 
@@ -37,6 +46,10 @@ module.exports = {
   getUser: async (req, res) => {
     const channel_id = req.params.channel_id
 
+    if (!channel_id) {
+      return res.status(400).send("GET '/user/:channel_id' request needs a channel_id")
+    }
+
     const user = await UserModel.findOne({ channel_id })
 
     if (!user) return res.status(404).send('User Not Found!')
@@ -45,7 +58,11 @@ module.exports = {
   },
 
   markUserForDeletion: async (req, res) => {
-    const channel_id = req.body.channel_id
+    const channel_id = req.params.channel_id
+
+    if (!channel_id) {
+      return res.status(400).send("DELETE '/user/:channel_id' request needs a channel_id")
+    }
 
     try {
       await UserModel.findOneAndUpdate(
