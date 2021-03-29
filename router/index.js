@@ -3,7 +3,6 @@ const Router = express.Router()
 
 const Product = require("../controllers/product")
 const User = require("../controllers/user")
-const Validate = require("../middleware/validate")
 
 // ping
 Router.route("/").get((req, res) => res.status(200).send("OK!"))
