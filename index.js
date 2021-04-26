@@ -15,10 +15,8 @@ const runDeleteScript = require('./scripts/deleteUsers')
 const MONGO_URI = process.env.MONGO_URI
 const PORT = process.env.PORT
 
-
-
-application.use(bodyParser.json())
-application.use(bodyParser.urlencoded({ extended: true }))
+application.use(express.urlencoded({ extended: true }))
+application.use(express.json())
 
 application.use(cors())
 
