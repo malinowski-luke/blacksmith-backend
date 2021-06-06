@@ -4,7 +4,6 @@ const express = require('express')
 const application = express()
 
 const cors = require('cors')
-const bodyParser = require('body-parser')
 const mongoose = require('mongoose')
 const morgan = require('morgan')
 const responseTime = require('response-time')
